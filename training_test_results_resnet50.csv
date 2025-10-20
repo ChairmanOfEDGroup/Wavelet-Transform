@@ -1,0 +1,9 @@
+Dataset,Test_Accuracy,Test_F1_Score,Test_AUC,Test_Precision,Test_Recall,Avg_Epoch_Time_sec
+compressed_0.00001_percent,0.7711,0.8708,0.5212,0.7769,0.9904,469.38
+compressed_0.0001_percent,0.7636,0.866,0.5103,0.7752,0.9807,461.02
+compressed_0.001_percent,0.7749,0.8732,0.5397,0.7778,0.9952,466.73
+compressed_0.01_percent,0.758,0.8614,0.5223,0.7771,0.9663,513.27
+compressed_0.1_percent,0.7448,0.8499,0.6093,0.7841,0.9277,594.52
+compressed_1_percent,0.6585,0.7554,0.6677,0.8541,0.6771,583.18
+compressed_10_percent,0.7036,0.8092,0.6443,0.8111,0.8072,583.37
+compressed_100_percent,0.651,0.748,0.6579,0.8545,0.6651,585.56
