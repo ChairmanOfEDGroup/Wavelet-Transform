@@ -114,7 +114,7 @@ We expect that models trained with **wavelet artifact augmentation** will:
 - **Model:** ResNet50
 - **Data Format:** DICOM → preprocessed to NumPy / PNG
 - **Evaluation Metrics:** AUC, ROC Curve
-- **Environment:** Python 3.10+, CUDA compatible GPU
+- **Environment:** Python 3.10+, CUDA compatible GPU.
 
 ---
 
