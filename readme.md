@@ -1,51 +1,144 @@
-课题想法 1：量化压缩率与模型性能的“甜点区” (The Sweet Spot)
-课题名称： 小波变换压缩率对深度学习模型分类性能的量化影响研究
+# 🧠 Improving Medical Image Classification Robustness using Wavelet Compression Artifacts
 
-研究背景与动机：
-数据存储和传输是有成本的。在许多场景下，我们需要在不显著牺牲模型精度的前提下，尽可能地压缩图像数据。那么，这个“显著牺牲”的临界点在哪里？是否存在一个“甜点区”，既能获得可观的压缩比，又能将模型性能的损失降到最低？
+> **A Study on Improving Medical Image Classification Model Robustness using Wavelet Compression Artifacts as a Data Augmentation Strategy**
 
-核心研究问题：
+---
 
-随着小波压缩率（保留的系数百分比）的提高，模型ResNet的准确率是如何变化的？这个关系是线性的还是非线性的？
+## 📘 Overview
 
-研究方法：
+In medical image analysis, deep learning models often rely heavily on high-quality data. However, medical images (e.g., DICOM) are usually extremely large, making storage, transmission, and processing challenging.  
+This project explores a **novel hypothesis** — that **wavelet compression artifacts**, instead of being harmful, can be leveraged as a **task-relevant form of noise** to enhance model robustness through **artifact-based data augmentation**.
 
-数据集准备： 选择乳腺癌据集。使用 PyWavelets 库，生成多个版本的训练集和测试集。
+Our goal is to determine whether intentionally injecting compression artifacts during training can lead to models that are **more stable**, **more generalizable**, and **perform better on clean, high-quality images**.
 
-模型训练： 选择ResNet-50。在每个压缩版本的数据集上，进行迁移学习。
+---
 
-性能评估： 记录每个模型在对应压缩版本的验证集上的准确率。绘制“压缩率 vs. 准确率”曲线。
+## 🎯 Motivation
 
-分析： 对比不同模型和数据集下的曲线，找出性能急剧下降的拐点，并分析其原因。
+Traditional wisdom suggests that cleaner data yields better models.  
+We challenge this idea:  
 
-预期成果与意义：
+> Could compression artifacts — often viewed as imperfections — actually help models learn more essential, generalizable features?
 
-为特定任务提供数据压缩的实践指导，帮助工程师在存储成本和模型性能之间做出明智决策。
+To test this, we propose using **wavelet compression artifacts as a structured data augmentation strategy** to simulate real-world variations in medical imaging.
 
-揭示不同深度学习模型对信息冗余和压缩伪影的鲁棒性差异。
+Additionally, this project addresses the common **class imbalance problem** in medical datasets, using weighted loss functions and robust evaluation metrics.
 
-课题想法 2：小波压缩作为一种新型数据增强手段
-课题名称： 基于小波压缩的数据增强对模型鲁棒性与泛化能力的影响研究
+---
 
-研究背景与动机：
-小数据增强（如旋转、裁剪、色彩抖动）是防止模型过拟合、提升其泛化能力的关键技术。小波压缩会引入独特的伪影，这可以被看作是一种特殊的“噪声”。让模型在训练中“见识”过这种噪声，是否能让它变得更强大，对未知的干扰更具抵抗力？
+## ⚙️ Methodology
 
-核心研究问题：
+### 1. Baseline and Problem Identification
 
-将小波压缩图像（以不同压缩率）混入原始训练集，是否能提升模型在标准测试集上的性能？
+- Base architecture: **ResNet50**
+- Loss: **Weighted Cross-Entropy**
+- Core metric: **AUC (Area Under ROC Curve)**, due to dataset imbalance
+- Evaluated model performance across multiple compression ratios (100% → 0.00001%)
 
-研究方法：
+### 2. Finding the Compression Threshold
 
-数据集构建： 在原始训练数据的基础上，动态（on-the-fly）或离线地生成小波压缩的副本，与原始图像混合，组成新的增强训练集。
+We conducted systematic experiments to identify when compression begins to severely degrade model performance.
 
-对比实验：
+| Coefficient % (kept) | AUC    | Dataset Size |
+| -------------------- | ------ | ------------ |
+| 100%                 | 0.6579 | 2.59 GB      |
+| 10%                  | 0.6443 | 2.17 GB      |
+| 1%                   | 0.6677 | 1.19 GB      |
+| 0.1%                 | 0.6093 | 498 MB       |
+| 0.01%                | 0.5223 | 323 MB       |
 
-基线模型 (Baseline): 只使用标准数据增强（旋转、翻转等）进行训练。
+**Finding:**  
+Once the coefficient percentage drops below **1%**, critical diagnostic features begin to vanish.
 
-实验模型 (Experimental): 在基线增强的基础上，额外加入小波压缩增强。
+---
 
-预期成果与意义：
+## 🧩 Data Preprocessing & Augmentation
 
-提出一种可能有效的新型数据增强技术。
+- **DICOM Windowing:** Enhanced contrast for tissues, solving normalization-based information loss.  
+- **ROI Cropping:** Focused on meaningful regions for more efficient learning.  
+- **Standard Augmentations:** Deterministic 90/180/270° rotations and random horizontal flips.  
+- **Artifact Injection:** The novel step — injecting compression artifacts as a “robustness vaccine.”
 
-即模型通过学习“压缩伪影”的模式，可能学到了更本质、更抗干扰的特征。
+---
+
+## 🧪 Two-Stage Robustness Framework
+
+### **Stage 1: Injection Probability Study**
+
+- Tested artifact injection rates of **0%, 25%, 50%, 75%**
+- Used diverse artifact sources: 10%, 1%, 0.1% compressed datasets  
+- **Result:** 75% injection probability achieved the best AUC improvement
+
+### **Stage 2: Artifact Type Ablation Study**
+
+- Tested all single and combined artifact types  
+- Best performance with **combined artifacts at 75% probability**  
+- Improved test AUC by **+0.05** over baseline
+
+---
+
+## 📊 Experimental Setup
+
+- **Data Split:**  
+  - 80% Train / 10% Validation / 10% Test  
+  - Validation and Test sets always use clean (100%) data
+- **Early Stopping** and **Adaptive Learning Rate**
+- **Independent evaluation** on unseen test data
+
+---
+
+## 📈 Results
+
+| Model                       | Artifact Injection    | AUC (↑)    |
+| --------------------------- | --------------------- | ---------- |
+| Baseline (clean only)       | 0%                    | 0.6579     |
+| Robust Model (artifact 75%) | Mixed (10%, 1%, 0.1%) | **0.7079** |
+
+> Injecting structured noise improves robustness and generalization.
+
+---
+
+## 🧬 Expected Outcomes
+
+We expect that models trained with **wavelet artifact augmentation** will:
+
+- Exhibit higher robustness to unseen image noise.
+- Maintain or improve diagnostic accuracy on clean data.
+- Provide a scalable path to model generalization for medical imaging.
+
+---
+
+## 🧰 Tech Stack
+
+- **Framework:** PyTorch / TensorFlow (depending on setup)
+- **Model:** ResNet50
+- **Data Format:** DICOM → preprocessed to NumPy / PNG
+- **Evaluation Metrics:** AUC, ROC Curve
+- **Environment:** Python 3.10+, CUDA compatible GPU
+
+---
+
+## 📂 Repository Structure
+
+```
+📦 MedicalImageRobustness
+├── data/
+│   ├── compressed_100_percent/
+│   ├── compressed_10_percent/
+│   ├── compressed_1_percent/
+│   └── ...
+├── src/
+│   ├── preprocessing.py
+│   ├── dataset_loader.py
+│   ├── train.py
+│   ├── evaluate.py
+│   └── utils/
+├── results/
+│   ├── auc_plots/
+│   ├── compression_visuals/
+│   └── logs/
+├── requirements.txt
+└── README.md
+```
+
+---
